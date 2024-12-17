@@ -11,19 +11,17 @@ canvas.pack()
 # Game state variables
 player_width = 50
 player_height = 30
-player = None  # Player created when the game starts
+player = None
 bullets = []
 enemies = []
 score = 0
-lives = 1  # ライフを1に固定
-difficulty_level = "Medium"  # Default difficulty
+lives = 3  # 初期ライフ設定
+difficulty_level = "Medium"
 
 
 # Update the score display
 def update_score_display():
     canvas.itemconfig(score_text, text=f"Score: {score}")
-    if score >= 1000:  # スコアが1000に達した場合、ゲームクリア
-        game_clear()
 
 
 # Update the life display
@@ -34,13 +32,13 @@ def update_lives_display():
 # Handle player movement
 def move_left(event):
     canvas.move(player, -20, 0)
-    if canvas.coords(player)[0] < 0:  # Prevent going out of bounds
+    if canvas.coords(player)[0] < 0:
         canvas.move(player, 20, 0)
 
 
 def move_right(event):
     canvas.move(player, 20, 0)
-    if canvas.coords(player)[2] > 500:  # Prevent going out of bounds
+    if canvas.coords(player)[2] > 500:
         canvas.move(player, -20, 0)
 
 
@@ -56,33 +54,47 @@ def shoot(event):
 # Create enemies
 def create_enemy():
     x_pos = random.randint(0, 450)
-    # Adjusted enemy type probabilities
     enemy_type = random.choices(["red", "green", "purple"], weights=[60, 30, 10], k=1)[0]
+    
+    # Adjusted difficulty: slower speeds for enemies
     if enemy_type == "purple":
-        enemy_speed = random.randint(2, 4)
-        # 紫色の三角形を描画
+        enemy_speed = random.randint(1, 3)  # Slower speed
         points = [x_pos, 0, x_pos + 15, 30, x_pos - 15, 30]
         enemy = canvas.create_polygon(points, fill="purple")
     else:
-        # 赤または緑の四角形
-        enemy_speed = random.randint(1, 3)
+        enemy_speed = random.randint(1, 2)  # Slower speed
         enemy = canvas.create_rectangle(x_pos, 0, x_pos + 30, 30, fill=enemy_type)
 
     enemies.append({"id": enemy, "type": enemy_type, "speed": enemy_speed})
 
 
-# Move enemies and handle collisions
+# Handle collisions and bullet movement
+def move_bullets():
+    for bullet in bullets[:]:
+        canvas.move(bullet, 0, -5)  # 弾丸を上に動かす
+        if canvas.coords(bullet)[1] < 0:
+            canvas.delete(bullet)
+            bullets.remove(bullet)
+    root.after(50, move_bullets)  # 弾丸ループ
+
+
+# Move enemies and handle collision
 def move_enemies():
     global lives, score
-    for enemy in enemies[:]:  # Ensure safe iteration
-        canvas.move(enemy["id"], 0, enemy["speed"])  # Move the enemies
-        if canvas.coords(enemy["id"])[3] > 400:  # If it reaches the bottom of the canvas
+    for enemy in enemies[:]:
+        canvas.move(enemy["id"], 0, enemy["speed"])
+        if canvas.coords(enemy["id"])[3] > 400:
+            # 敵が画面の下まで到達した場合
             canvas.delete(enemy["id"])
             enemies.remove(enemy)
             lives -= 1
             update_lives_display()
+            
+            # ゲームオーバーのチェック
             if lives <= 0:
                 game_over()
+                return  # これ以上処理を行わない
+
         for bullet in bullets[:]:
             if (
                 canvas.coords(bullet)[2] > canvas.coords(enemy["id"])[0]
@@ -93,92 +105,55 @@ def move_enemies():
                 bullets.remove(bullet)
                 canvas.delete(enemy["id"])
                 enemies.remove(enemy)
-                
-                # 当たった敵の種類でスコア加算
-                if enemy["type"] == "purple":  # 紫色の敵は50点
-                    score += 50
-                elif enemy["type"] == "green":  # 緑色の敵は30点
-                    score += 30
-                else:  # 赤色の敵は10点
-                    score += 10
-                
+                score += 10
                 update_score_display()
                 break
-    root.after(50, move_enemies)
+
+    root.after(50, move_enemies)  # 敵のループを継続
 
 
-# Move bullets
-def move_bullets():
-    for bullet in bullets[:]:
-        canvas.move(bullet, 0, -5)
-        if canvas.coords(bullet)[1] < 0:
-            canvas.delete(bullet)
-            bullets.remove(bullet)
-    root.after(50, move_bullets)
-
-
-# Create a wave of enemies
+# Enemy spawning loop with adjusted difficulty
 def enemy_wave():
-    if difficulty_level == "Easy":
-        delay = 1500
-    elif difficulty_level == "Medium":
-        delay = 1000
-    else:
-        delay = 700
-    create_enemy()  # Create a new enemy
-    root.after(delay, enemy_wave)  # Set the delay for next enemy
+    if lives > 0:  # ゲームが進行中のみ敵を生成
+        create_enemy()
+        root.after(800, enemy_wave)  # 敵出現間隔
 
 
-# Handle Game Over
+# Game Over
 def game_over():
-    canvas.create_text(250, 200, text="GAME OVER", fill="white", font=("Helvetica", 20))
-    root.after(2000, root.destroy)
+    canvas.create_text(250, 200, text="GAME OVER", fill="white", font=("Helvetica", 24))
+    print("GAME OVER - ライフが0になりました")  # ログ出力
+    root.after(2000, root.destroy)  # 2秒後にアプリを終了
 
 
-# Handle Game Clear
-def game_clear():
-    canvas.create_text(250, 200, text="GAME CLEAR!", fill="white", font=("Helvetica", 20))
-    root.after(2000, root.destroy)
-
-
-# Start the game logic
+# Main game start logic
 def start_game():
-    global player, score_text, lives_text
-    canvas.delete("all")  # Clear menu
-    player = canvas.create_rectangle(225, 350, 275, 380, fill="blue")  # Create player
-    root.bind("<Left>", move_left)  # Left key event
-    root.bind("<Right>", move_right)  # Right key event
-    root.bind("<space>", shoot)  # Space key event
+    global player, score_text, lives_text, lives
+    canvas.delete("all")
+    
+    # Reset state
+    lives = 3  # 明示的にライフを3に設定
+    bullets.clear()
+    enemies.clear()
+    
+    # Draw initial game elements
+    player = canvas.create_rectangle(225, 350, 275, 380, fill="blue")
+    root.bind("<Left>", move_left)
+    root.bind("<Right>", move_right)
+    root.bind("<space>", shoot)
+    
+    # Set up the score and lives UI
     score_text = canvas.create_text(50, 10, text=f"Score: {score}", fill="white", font=("Helvetica", 12))
     lives_text = canvas.create_text(400, 10, text=f"Lives: {lives}", fill="white", font=("Helvetica", 12))
-    move_enemies()
+    
+    # Update the lives display explicitly
+    update_lives_display()
+    
+    # Start game logic
     move_bullets()
+    move_enemies()
     enemy_wave()
 
 
-# Menu screen for difficulty selection
-def create_menu():
-    def set_difficulty_and_start(level):
-        global difficulty_level
-        difficulty_level = level  # Set difficulty
-        start_game()
-
-    # Clear menu area
-    canvas.delete("all")
-    canvas.create_text(250, 100, text="難易度選択", fill="white", font=("Helvetica", 16))
-
-    # Difficulty buttons
-    easy_button = tk.Button(root, text="初級 (Easy)", command=lambda: set_difficulty_and_start("Easy"))
-    medium_button = tk.Button(root, text="中級 (Medium)", command=lambda: set_difficulty_and_start("Medium"))
-    hard_button = tk.Button(root, text="上級 (Hard)", command=lambda: set_difficulty_and_start("Hard"))
-
-    # Pack buttons
-    easy_button.pack()
-    medium_button.pack()
-    hard_button.pack()
-
-
-# Create and show the menu
-create_menu()
-
+start_game()
 root.mainloop()
