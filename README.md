@@ -1,4 +1,4 @@
-# project
+#　シューティングゲーム★
 プロジェクトの説明です。
 こういうのを作りたいです。
 https://github.com/UTokyo-IPP/utokyo-ipp.github.io/blob/master/README.md
