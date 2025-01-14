@@ -4,7 +4,7 @@
 https://github.com/UTokyo-IPP/utokyo-ipp.github.io/blob/master/README.md
 
 # 記述してほしいこと
-- テーマ名
+- し
 - プログラムの概要
 - 動作環境 / 必要条件（Requirements）
 - 使い方
