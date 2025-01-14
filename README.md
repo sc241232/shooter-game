@@ -4,16 +4,11 @@
 https://github.com/UTokyo-IPP/utokyo-ipp.github.io/blob/master/README.md
 
 # 記述してほしいこと
-- し
-- プログラムの概要
-- 動作環境 / 必要条件（Requirements）
-- 使い方
-- 工夫した点
-- 参考にしたサイトがあれば記載
-- 作者名
+- シューティングゲーム
+- スペースキーを押すと球を発射。矢印キーを使って左右に移動。
+- 流れてくる的野が、色によって点数が違いうようにした。再スタートの際、打った球が少し早く流れるため、難易度が簡単になっていくようにした。
+- 金髙夏葵
 
-# 参考
-https://learningift.com/blogs/06d6kcV21i9/github%E3%81%AEreadme%E3%82%92markdown%E8%A8%98%E6%B3%95%E3%81%A7%E6%9B%B8%E3%81%8F
 
 ## プログラムの説明
 このプログラムは、○○です。
